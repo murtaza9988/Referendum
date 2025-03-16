@@ -124,18 +124,18 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Twilio Configuration (for SMS and email via SendGrid)
-TWILIO_ACCOUNT_SID = 'AC012c4de26b297cda4b3f597377bf09'
-TWILIO_AUTH_TOKEN = 'f1af9d1eeed1a9a016821294c49397'
-TWILIO_PHONE_NUMBER = '+184460369'
+TWILIO_ACCOUNT_SID = ''
+TWILIO_AUTH_TOKEN = ''
+TWILIO_PHONE_NUMBER = ''
 
 # Email settings using Twilio SendGrid
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'email-smtp.ap-northeast-1.amazonaws.com'  # For Gmail, adjust for other providers
+EMAIL_HOST = ''  # For Gmail, adjust for other providers
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'no-reply@notification.vetty.clinic'  # Your email
-EMAIL_HOST_PASSWORD = 'BIlD5amVkNqKP4Xcu0Z6NEdJYLf3YsZqtBHCIkMs+zlp'  # Use app-specific password if using Gmail
-DEFAULT_FROM_EMAIL = 'support@vetty.clinic'
+EMAIL_HOST_USER = ''  # Your email
+EMAIL_HOST_PASSWORD = ''  # Use app-specific password if using Gmail
+DEFAULT_FROM_EMAIL = ''
 # allauth Configuration
 SITE_ID = 1  # Required for allauth
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory' 
