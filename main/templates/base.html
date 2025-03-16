@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Home</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            color: #333;
+        }
+
+.radio-buttons-inline {
+    display: flex; /* Display radio buttons inline */
+    gap: 10px; /* Add space between radio buttons */
+}
+
+.form-check {
+    margin-bottom: 0; /* Remove margin for inline display */
+}
+
+.form-check-label {
+    margin-left: 5px; /* Add space between radio button and label */
+}
+
+
+    </style>
+</head>
+<body>
+    <!-- Include the navbar -->
+    {% include 'navbar.html' %}
+    
+    <!-- Content block for other templates to extend -->
+    {% block content %}
+    
+    {% endblock %}
+</body>
+</html>

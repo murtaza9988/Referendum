@@ -1,0 +1,547 @@
+
+    /* Base Styles */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Inter', 'Segoe UI', sans-serif;
+    }
+
+    body {
+        background: linear-gradient(145deg, #eef2f6, #dbe2ea);
+        min-height: 100vh;
+        line-height: 1.5;
+    }
+
+    .form-container {
+        max-width: 680px;
+        margin: 40px auto;
+        padding: 0 15px;
+    }
+
+    .form-card {
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 8px 35px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+        position: relative;
+        overflow: hidden;
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    .form-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: linear-gradient(90deg, #3b82f6, #10b981, #3b82f6);
+        background-size: 200% 100%;
+        animation: gradientShift 4s ease infinite;
+    }
+
+    .form-header-container {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .form-header {
+        color: #1e293b;
+        font-size: 32px;
+        font-weight: 800;
+        letter-spacing: -0.8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .header-underline {
+        width: 60px;
+        height: 4px;
+        background: linear-gradient(90deg, #3b82f6, #10b981);
+        margin: 12px auto;
+        border-radius: 2px;
+    }
+
+    .form-subtitle {
+        color: #6b7280;
+        font-size: 16px;
+        font-weight: 400;
+        margin-top: 6px;
+        opacity: 0.9;
+    }
+
+    .referendum-options {
+        text-align: center;
+        margin-bottom: 25px;
+        background: #f8fafc;
+        padding: 12px;
+        border-radius: 8px;
+    }
+
+    .referendum-options p {
+        color: #475569;
+        font-size: 15px;
+        font-weight: 600;
+        margin: 6px 0;
+    }
+
+    .check {
+        color: #10b981;
+        font-size: 20px;
+        margin-right: 10px;
+    }
+
+    .signer-form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    /* Step Indicator with Progress Line */
+    .step-indicator {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-bottom: 20px;
+        position: relative;
+    }
+
+    .progress-line {
+        position: absolute;
+        top: 50%;
+        left: 50px;
+        right: 50px;
+        height: 4px;
+        background: #e5e7eb;
+        border-radius: 2px;
+        transform: translateY(-50%);
+        z-index: 0;
+    }
+
+    .progress-fill {
+        width: 0;
+        height: 100%;
+        background: linear-gradient(90deg, #3b82f6, #10b981);
+        border-radius: 2px;
+        transition: width 0.5s ease;
+    }
+
+    .step {
+        width: 30px;
+        height: 30px;
+        background: #e5e7eb;
+        color: #6b7280;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        z-index: 1;
+        position: relative;
+    }
+
+    .step.active {
+        background: #3b82f6;
+        color: #fff;
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        transform: scale(1.2);
+    }
+
+    .step.completed::after {
+        content: '✔';
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        width: 16px;
+        height: 16px;
+        background: #10b981;
+        color: #fff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        animation: popIn 0.3s ease;
+    }
+
+    .form-step {
+        transition: opacity 0.5s ease, transform 0.5s ease;
+        will-change: opacity, transform;
+    }
+
+    .form-step:not([style*="display: none"]) {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .form-step[style*="display: none"] {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    /* Compact styling for Step 2 with increased font sizes */
+    .step-2-compact .form-group {
+        margin-bottom: 8px; /* Reduced margin between fields */
+    }
+
+    .step-2-compact .form-group label {
+        font-size: 14px; /* Increased label font size */
+        margin-bottom: 4px;
+    }
+
+    .step-2-compact .form-group input[type="text"],
+    .step-2-compact .form-group input[type="email"] {
+        padding: 8px 12px; /* Reduced input padding */
+        font-size: 16px; /* Increased input font size */
+    }
+
+    .step-2-compact .checkbox-group {
+        margin-bottom: 8px;
+    }
+
+    .step-2-compact .checkbox-group label {
+        font-size: 16px; /* Increased font size for checkbox label */
+    }
+
+    .step-2-compact .btn-container {
+        margin: 10px 0; /* Reduced margin for buttons */
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    label {
+        display: block;
+        font-weight: 700;
+        color: #1e293b;
+        font-size: 12px;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    input[type="email"] {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 14px;
+        background: #fafafa;
+        transition: all 0.3s ease;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    input[type="text"]:focus,
+    input[type="date"]:focus,
+    input[type="email"]:focus {
+        border-color: #3b82f6;
+        background: #fff;
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+        outline: none;
+    }
+
+    .gender-group .radio-group {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        padding: 5px 0;
+    }
+
+    .radio-label {
+        display: flex;
+        align-items: center;
+        font-weight: 500;
+        color: #475569;
+        font-size: 15px;
+        cursor: pointer;
+        transition: color 0.3s ease;
+    }
+
+    .radio-label:hover {
+        color: #1e293b;
+    }
+
+    .radio-group input[type="radio"] {
+        accent-color: #3b82f6;
+        margin-right: 8px;
+        width: 16px;
+        height: 16px;
+    }
+
+    .pin-group {
+        text-align: center;
+        background: #f1f5f9;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .pin-label {
+        font-size: 16px;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 12px;
+    }
+
+    .inline-fields {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+
+    .inline-field {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .sub-label {
+        font-weight: 500;
+        color: #475569;
+        font-size: 13px;
+        margin-bottom: 6px;
+    }
+
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        justify-content: center;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+        accent-color: #3b82f6;
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+    }
+
+    .checkbox-group label {
+        font-weight: 500;
+        color: #475569;
+        font-size: 15px;
+        text-transform: none;
+    }
+
+    .btn-container {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin: 20px 0;
+    }
+
+    .action-btn {
+        padding: 12px 35px;
+        border: none;
+        border-radius: 6px;
+        color: #fff;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        min-width: 180px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .action-btn:active {
+        transform: translateY(0) scale(0.98);
+    }
+
+    .action-btn::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: width 0.6s ease, height 0.6s ease;
+    }
+
+    .action-btn:active::before {
+        width: 300px;
+        height: 300px;
+    }
+
+    .next-btn {
+        background: linear-gradient(135deg, #6b7280, #4b5563);
+    }
+
+    .back-btn {
+        background: linear-gradient(135deg, #9ca3af, #6b7280);
+    }
+
+    .pin-btn {
+        background: linear-gradient(135deg, #10b981, #059669);
+    }
+
+    .submit-btn {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    }
+
+    .spinner {
+        display: none;
+        width: 18px;
+        height: 18px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-top: 3px solid #fff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    .spinner.active {
+        display: inline-block;
+    }
+
+    .error {
+        color: #ef4444;
+        font-size: 12px;
+        margin-top: 5px;
+        font-weight: 500;
+        text-align: center;
+        background: #fef2f2;
+        padding: 4px 8px;
+        border-radius: 4px;
+    }
+
+    .messages {
+        margin-top: 15px;
+        text-align: center;
+    }
+
+    .message {
+        padding: 10px 18px;
+        border-radius: 6px;
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        display: inline-block;
+        max-width: 85%;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        animation: slideIn 0.3s ease;
+    }
+
+    .message.success {
+        background: #f0fdf4;
+        color: #15803d;
+        border-left: 4px solid #10b981;
+    }
+
+    .message.error {
+        background: #fef2f2;
+        color: #b91c1c;
+        border-left: 4px solid #ef4444;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    @keyframes popIn {
+        0% { transform: scale(0); opacity: 0; }
+        70% { transform: scale(1.2); opacity: 1; }
+        100% { transform: scale(1); }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .form-card {
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .form-header {
+            font-size: 28px;
+        }
+
+        .step-indicator {
+            gap: 15px;
+        }
+
+        .step {
+            width: 25px;
+            height: 25px;
+            font-size: 12px;
+        }
+
+        .progress-line {
+            left: 40px;
+            right: 40px;
+        }
+
+        .gender-group .radio-group {
+            flex-direction: column;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .inline-fields {
+            grid-template-columns: 1fr;
+            gap: 15px;
+            max-width: 100%;
+        }
+
+        .action-btn {
+            padding: 10px 30px;
+            min-width: 160px;
+        }
+
+        .step-2-compact .form-group {
+            margin-bottom: 6px;
+        }
+
+        .step-2-compact .form-group label {
+            font-size: 13px; 
+        }
+
+        .step-2-compact .form-group input[type="text"],
+        .step-2-compact .form-group input[type="email"] {
+            padding: 6px 10px;
+            font-size: 14px; 
+        }
+
+        .step-2-compact .checkbox-group label {
+            font-size: 14px; 
+        }
+
+        .step-2-compact .btn-container {
+            margin: 8px 0;
+        }
+    }

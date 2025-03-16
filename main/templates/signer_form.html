@@ -1,0 +1,306 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/signer_form.css' %}">
+
+<div class="form-container">
+  <div class="form-card">
+    <div class="form-header-container">
+      <h3 class="form-header"><i class="icon-user"></i> Sign the Referendum</h3>
+      <div class="header-underline"></div>
+      <p class="form-subtitle">Your signature matters—act now in 3 simple steps!</p>
+    </div>
+    <div class="referendum-options">
+      <p><span class="check">✔</span> NO to increasing councilpersons from 9 to 15</p>
+      <p><span class="check">✔</span> NO to raising salaries from 4,500 to 9,000</p>
+    </div>
+
+    <!-- Final submission posts to the verify_signer API endpoint via AJAX -->
+    <form method="post" enctype="multipart/form-data" class="signer-form" id="final-form">
+      {% csrf_token %}
+      <fieldset class="form-section">
+        <div class="step-indicator">
+          <div class="progress-line">
+            <div class="progress-fill"></div>
+          </div>
+          <span class="step active" data-step="1" aria-label="Step 1">1</span>
+          <span class="step" data-step="2" aria-label="Step 2">2</span>
+          <span class="step" data-step="3" aria-label="Step 3">3</span>
+        </div>
+
+        <!-- Step 1: Basic Information -->
+        <div class="form-step" data-step="1">
+          <div class="form-group">
+            <label for="{{ form.signer_full_name.id_for_label }}">Full Name</label>
+            {{ form.signer_full_name }}
+            {% if form.signer_full_name.errors %}
+            <span class="error">{{ form.signer_full_name.errors|first }}</span>
+            {% endif %}
+          </div>
+          <div class="form-group gender-group">
+            <label>Gender</label>
+            <div class="radio-group">
+              <label class="radio-label"><input type="radio" name="gender" value="F" required> Female</label>
+              <label class="radio-label"><input type="radio" name="gender" value="M" required> Male</label>
+              <label class="radio-label"><input type="radio" name="gender" value="O" required> Other</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="{{ form.signer_birthdate.id_for_label }}">Birthdate</label>
+            {{ form.signer_birthdate }}
+          </div>
+          <div class="btn-container">
+            <button type="button" class="action-btn next-btn" data-next="2" aria-label="Go to Step 2">Next</button>
+          </div>
+        </div>
+
+        <!-- Step 2: Additional Information -->
+        <div class="form-step" data-step="2" style="display: none;">
+          <div class="form-group">
+            <label for="{{ form.signer_cpf.id_for_label }}">CPF</label>
+            {{ form.signer_cpf }}
+            {% if form.signer_cpf.errors %}
+            <span class="error">{{ form.signer_cpf.errors.0 }}</span>
+            {% endif %}
+          </div>
+          <div class="form-group">
+            <label for="{{ form.signer_id.id_for_label }}">Voter ID</label>
+            {{ form.signer_id }}
+          </div>
+          <div class="form-group">
+            <label for="{{ form.signer_email.id_for_label }}">Email</label>
+            {{ form.signer_email }}
+          </div>
+          <div class="form-group">
+            <label for="{{ form.signer_mobile_number.id_for_label }}">Mobile Number</label>
+            {{ form.signer_mobile_number }}
+          </div>
+          <div class="form-group checkbox-group">
+            <input type="checkbox" id="signature_hidden" name="signer_signature_is_hidden" checked>
+            <label for="signature_hidden">Hide my signature</label>
+          </div>
+          <div class="btn-container">
+            <button type="button" class="action-btn back-btn" data-prev="1" aria-label="Go back to Step 1">Back</button>
+            <!-- "Get OTP" button will collect data from steps 1 & 2 and call the send_otp API -->
+            <button type="button" class="action-btn pin-btn" id="pin-btn" aria-label="Get OTP">
+              <span id="pin-btn-text">Get OTP</span>
+              <span class="spinner" id="pin-btn-spinner"></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 3: OTP Verification -->
+        <div class="form-step" data-step="3" style="display: none;">
+          <div class="form-group pin-group">
+            <label class="pin-label">Verify Your OTP Codes</label>
+            <div class="inline-fields">
+              <div class="inline-field">
+                <label for="mobile_pin" class="sub-label">Mobile OTP</label>
+                <input type="text" id="mobile_pin" name="mobile_pin" maxlength="6" required placeholder="Enter mobile OTP" disabled>
+              </div>
+              <div class="inline-field">
+                <label for="email_pin" class="sub-label">Email OTP</label>
+                <input type="text" id="email_pin" name="email_pin" maxlength="6" required placeholder="Enter email OTP" disabled>
+              </div>
+            </div>
+          </div>
+          <div class="btn-container">
+            <button type="button" class="action-btn back-btn" data-prev="2" aria-label="Go back to Step 2">Back</button>
+            <button type="submit" class="action-btn submit-btn" id="submit-btn" aria-label="Submit Signature">
+              <span id="submit-btn-text">Submit Signature</span>
+              <span class="spinner" id="submit-btn-spinner"></span>
+            </button>
+          </div>
+        </div>
+      </fieldset>
+
+      {% if messages %}
+      <div class="messages">
+        {% for message in messages %}
+        <p class="message {{ message.tags }}">{{ message }}</p>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const form = document.getElementById("final-form");
+  const pinButton = document.getElementById("pin-btn");
+  const submitButton = document.getElementById("submit-btn");
+  const pinBtnText = document.getElementById("pin-btn-text");
+  const pinBtnSpinner = document.getElementById("pin-btn-spinner");
+  const submitBtnText = document.getElementById("submit-btn-text");
+  const submitBtnSpinner = document.getElementById("submit-btn-spinner");
+  const steps = document.querySelectorAll(".form-step");
+  const stepIndicators = document.querySelectorAll(".step");
+  const nextButtons = document.querySelectorAll(".next-btn");
+  const backButtons = document.querySelectorAll(".back-btn");
+  const progressFill = document.querySelector(".progress-fill");
+  let currentStep = 1;
+
+  // Collect data from steps 1 and 2 (even if inputs are disabled)
+  function collectFormData() {
+    const data = {};
+    document.querySelectorAll('.form-step[data-step="1"], .form-step[data-step="2"]').forEach(el => {
+      el.querySelectorAll("input, select, textarea").forEach(input => {
+        // Use the input's value even if disabled.
+        if (input.name) {
+          data[input.name] = input.value;
+        }
+      });
+    });
+    return data;
+  }
+
+  function updateProgress(step) {
+    currentStep = parseInt(step);
+    const totalSteps = stepIndicators.length;
+    const progressPercentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
+    progressFill.style.width = `${progressPercentage}%`;
+    stepIndicators.forEach(indicator => {
+      const indicatorStep = parseInt(indicator.getAttribute("data-step"));
+      indicator.classList.toggle("active", indicatorStep === currentStep);
+      indicator.classList.toggle("completed", indicatorStep < currentStep);
+    });
+  }
+
+  function showStep(step) {
+    steps.forEach(s => {
+      const stepNumber = parseInt(s.getAttribute("data-step"));
+      const otpInputs = s.querySelectorAll("#mobile_pin, #email_pin");
+      if (stepNumber === 3) {
+        otpInputs.forEach(input => {
+          input.disabled = false;
+          input.setAttribute("required", "required");
+        });
+      } else {
+        otpInputs.forEach(input => {
+          input.disabled = true;
+          input.removeAttribute("required");
+        });
+      }
+      if (stepNumber === step) {
+        s.style.display = "block";
+        setTimeout(() => s.style.opacity = "1", 10);
+      } else {
+        s.style.opacity = "0";
+        setTimeout(() => s.style.display = "none", 300);
+      }
+    });
+    updateProgress(step);
+  }
+
+  nextButtons.forEach(button => {
+    button.addEventListener("click", () => {
+      const nextStep = parseInt(button.getAttribute("data-next"));
+      const currentStepInputs = steps[currentStep - 1].querySelectorAll("input[required]");
+      let isValid = true;
+      currentStepInputs.forEach(input => {
+        if (!input.checkValidity()) {
+          input.reportValidity();
+          isValid = false;
+        }
+      });
+      if (isValid) {
+        showStep(nextStep);
+      }
+    });
+  });
+
+  backButtons.forEach(button => {
+    button.addEventListener("click", () => {
+      const prevStep = parseInt(button.getAttribute("data-prev"));
+      showStep(prevStep);
+    });
+  });
+
+  // When "Get OTP" is clicked, gather all form data from steps 1 and 2 and call the OTP API
+  pinButton.addEventListener("click", function (e) {
+    e.preventDefault();
+    pinBtnText.textContent = "Sending OTP...";
+    pinBtnSpinner.classList.add("active");
+    pinButton.disabled = true;
+    
+    const data = collectFormData();
+    // Convert the data to URL-encoded form data
+    const formData = new URLSearchParams();
+    for (const key in data) {
+      formData.append(key, data[key]);
+    }
+
+    fetch("{% url 'send_otp' %}", {
+      method: "POST",
+      body: formData,
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+      },
+      credentials: "same-origin"
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log("Response from OTP API:", data);
+      if (data.success) {
+        showStep(3);
+      } else {
+        alert(data.message);
+      }
+      pinBtnText.textContent = "Get OTP";
+      pinBtnSpinner.classList.remove("active");
+      pinButton.disabled = false;
+    })
+    .catch(error => {
+      console.error("Error sending OTP:", error);
+      pinBtnText.textContent = "Get OTP";
+      pinBtnSpinner.classList.remove("active");
+      pinButton.disabled = false;
+    });
+  });
+
+  // Intercept final submission to verify OTP via AJAX
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    submitBtnText.textContent = "Submitting...";
+    submitBtnSpinner.classList.add("active");
+    submitButton.disabled = true;
+
+    // Create FormData from the entire form (OTP fields will now be enabled)
+    const finalFormData = new URLSearchParams(new FormData(form));
+
+    fetch("{% url 'verify_signer' %}", {
+      method: "POST",
+      body: finalFormData,
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+      },
+      credentials: "same-origin"
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log("Response from verify API:", data);
+      if (data.success) {
+        alert(data.message);
+        window.location.href = "{% url 'signer_form' %}";
+      } else {
+        alert(data.message);
+      }
+      submitBtnText.textContent = "Submit Signature";
+      submitBtnSpinner.classList.remove("active");
+      submitButton.disabled = false;
+    })
+    .catch(error => {
+      console.error("Error verifying OTP:", error);
+      submitBtnText.textContent = "Submit Signature";
+      submitBtnSpinner.classList.remove("active");
+      submitButton.disabled = false;
+    });
+  });
+
+  updateProgress(1);
+});
+</script>
+{% endblock %}
