@@ -123,12 +123,12 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Twilio Configuration (for SMS and email via SendGrid)
+# Twilio Configuration
 TWILIO_ACCOUNT_SID = ''
 TWILIO_AUTH_TOKEN = ''
 TWILIO_PHONE_NUMBER = ''
 
-# Email settings using Twilio SendGrid
+# Email settings 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = ''  # For Gmail, adjust for other providers
 EMAIL_PORT = 587

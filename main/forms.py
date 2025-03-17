@@ -25,8 +25,8 @@ class SignerForm(forms.ModelForm):
     class Meta:
         model = Signer
         exclude = ['email_otp', 'mobile_otp', 'otp_created_at', 'originating_ip', 
-                  'signer_email_is_checked', 'signer_mobile_is_checked',
-                  'hash_and_time', 'signing_datetime']
+                   'signer_email_is_checked', 'signer_mobile_is_checked',
+                   'hash_and_time', 'signing_datetime']
         widgets = {
             'signer_full_name': forms.TextInput(attrs={'placeholder': 'Enter your full name'}),
             'signer_cpf': forms.TextInput(attrs={'placeholder': 'XXX.XXX.XXX-XX'}),
@@ -68,3 +68,11 @@ class SignerForm(forms.ModelForm):
         if birthdate and birthdate > datetime.date.today():
             raise ValidationError('Birthdate cannot be in the future.')
         return cleaned_data
+
+# New form for OTP verification that only includes the fields you collect in your multi-step UI.
+class SignerOTPForm(forms.ModelForm):
+    class Meta:
+        model = Signer
+        # Only include fields that are collected in your UI
+        fields = ['signer_full_name', 'gender', 'signer_birthdate', 'signer_cpf',
+                  'signer_id', 'signer_email', 'signer_mobile_number', 'signer_signature_is_hidden']

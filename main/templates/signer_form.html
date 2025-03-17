@@ -15,10 +15,10 @@
       <p><span class="check">✔</span> NO to raising salaries from 4,500 to 9,000</p>
     </div>
 
-    <!-- Final submission posts to the verify_signer API endpoint via AJAX -->
+    <!-- Final submission posts to verify_signer endpoint via AJAX -->
     <form method="post" enctype="multipart/form-data" class="signer-form" id="final-form">
       {% csrf_token %}
-      <fieldset class="form-section">
+      <fieldset class="form-section" style="border: none;">
         <div class="step-indicator">
           <div class="progress-line">
             <div class="progress-fill"></div>
@@ -40,9 +40,15 @@
           <div class="form-group gender-group">
             <label>Gender</label>
             <div class="radio-group">
-              <label class="radio-label"><input type="radio" name="gender" value="F" required> Female</label>
-              <label class="radio-label"><input type="radio" name="gender" value="M" required> Male</label>
-              <label class="radio-label"><input type="radio" name="gender" value="O" required> Other</label>
+              <label class="radio-label">
+                <input type="radio" name="gender" value="F" required> Female
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="gender" value="M" required> Male
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="gender" value="O" required> Other
+              </label>
             </div>
           </div>
           <div class="form-group">
@@ -60,7 +66,7 @@
             <label for="{{ form.signer_cpf.id_for_label }}">CPF</label>
             {{ form.signer_cpf }}
             {% if form.signer_cpf.errors %}
-            <span class="error">{{ form.signer_cpf.errors.0 }}</span>
+            <span class="error">{{ form.signer_cpf.errors|first }}</span>
             {% endif %}
           </div>
           <div class="form-group">
@@ -81,7 +87,7 @@
           </div>
           <div class="btn-container">
             <button type="button" class="action-btn back-btn" data-prev="1" aria-label="Go back to Step 1">Back</button>
-            <!-- "Get OTP" button will collect data from steps 1 & 2 and call the send_otp API -->
+            <!-- "Get OTP" button calls the send_otp API -->
             <button type="button" class="action-btn pin-btn" id="pin-btn" aria-label="Get OTP">
               <span id="pin-btn-text">Get OTP</span>
               <span class="spinner" id="pin-btn-spinner"></span>
@@ -114,6 +120,9 @@
         </div>
       </fieldset>
 
+      <!-- Container for displaying messages (errors or success) -->
+      <div id="form-errors"></div>
+
       {% if messages %}
       <div class="messages">
         {% for message in messages %}
@@ -134,6 +143,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const pinBtnSpinner = document.getElementById("pin-btn-spinner");
   const submitBtnText = document.getElementById("submit-btn-text");
   const submitBtnSpinner = document.getElementById("submit-btn-spinner");
+  const formErrors = document.getElementById("form-errors");
   const steps = document.querySelectorAll(".form-step");
   const stepIndicators = document.querySelectorAll(".step");
   const nextButtons = document.querySelectorAll(".next-btn");
@@ -141,14 +151,19 @@ document.addEventListener("DOMContentLoaded", function () {
   const progressFill = document.querySelector(".progress-fill");
   let currentStep = 1;
 
-  // Collect data from steps 1 and 2 (even if inputs are disabled)
+  // Helper: Collect data from steps 1 & 2; include only checked radio inputs.
   function collectFormData() {
     const data = {};
     document.querySelectorAll('.form-step[data-step="1"], .form-step[data-step="2"]').forEach(el => {
       el.querySelectorAll("input, select, textarea").forEach(input => {
-        // Use the input's value even if disabled.
         if (input.name) {
-          data[input.name] = input.value;
+          if (input.type === "radio") {
+            if (input.checked) {
+              data[input.name] = input.value;
+            }
+          } else {
+            data[input.name] = input.value;
+          }
         }
       });
     });
@@ -217,7 +232,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  // When "Get OTP" is clicked, gather all form data from steps 1 and 2 and call the OTP API
+  // "Get OTP" button: Collect data from steps 1 & 2 and call the send_otp API.
   pinButton.addEventListener("click", function (e) {
     e.preventDefault();
     pinBtnText.textContent = "Sending OTP...";
@@ -225,12 +240,11 @@ document.addEventListener("DOMContentLoaded", function () {
     pinButton.disabled = true;
     
     const data = collectFormData();
-    // Convert the data to URL-encoded form data
     const formData = new URLSearchParams();
     for (const key in data) {
       formData.append(key, data[key]);
     }
-
+    
     fetch("{% url 'send_otp' %}", {
       method: "POST",
       body: formData,
@@ -245,8 +259,11 @@ document.addEventListener("DOMContentLoaded", function () {
       console.log("Response from OTP API:", data);
       if (data.success) {
         showStep(3);
+        formErrors.innerHTML = `<p class="success">${data.message}</p>`;
+        setTimeout(() => { formErrors.innerHTML = ""; }, 2000);
       } else {
-        alert(data.message);
+        formErrors.innerHTML = `<p class="error">${data.message}</p>`;
+        setTimeout(() => { formErrors.innerHTML = ""; }, 2000);
       }
       pinBtnText.textContent = "Get OTP";
       pinBtnSpinner.classList.remove("active");
@@ -254,22 +271,23 @@ document.addEventListener("DOMContentLoaded", function () {
     })
     .catch(error => {
       console.error("Error sending OTP:", error);
+      formErrors.innerHTML = `<p class="error">Error sending OTP. Please try again.</p>`;
+      setTimeout(() => { formErrors.innerHTML = ""; }, 2000);
       pinBtnText.textContent = "Get OTP";
       pinBtnSpinner.classList.remove("active");
       pinButton.disabled = false;
     });
   });
 
-  // Intercept final submission to verify OTP via AJAX
+  // Final submission: Intercept form submit and call verify_signer API via AJAX.
   form.addEventListener("submit", function (e) {
     e.preventDefault();
     submitBtnText.textContent = "Submitting...";
     submitBtnSpinner.classList.add("active");
     submitButton.disabled = true;
-
-    // Create FormData from the entire form (OTP fields will now be enabled)
+    
     const finalFormData = new URLSearchParams(new FormData(form));
-
+    
     fetch("{% url 'verify_signer' %}", {
       method: "POST",
       body: finalFormData,
@@ -283,10 +301,22 @@ document.addEventListener("DOMContentLoaded", function () {
     .then(data => {
       console.log("Response from verify API:", data);
       if (data.success) {
-        alert(data.message);
-        window.location.href = "{% url 'signer_form' %}";
+        formErrors.innerHTML = `<p class="success">${data.message}</p>`;
+        setTimeout(() => {
+          formErrors.innerHTML = "";
+          window.location.href = "{% url 'signer_form' %}";
+        }, 2000);
       } else {
-        alert(data.message);
+        let errorHtml = `<p class="error">${data.message}</p>`;
+        if(data.errors) {
+          for (const field in data.errors) {
+            data.errors[field].forEach(msg => {
+              errorHtml += `<p class="error">${field}: ${msg}</p>`;
+            });
+          }
+        }
+        formErrors.innerHTML = errorHtml;
+        setTimeout(() => { formErrors.innerHTML = ""; }, 2000);
       }
       submitBtnText.textContent = "Submit Signature";
       submitBtnSpinner.classList.remove("active");
@@ -294,6 +324,8 @@ document.addEventListener("DOMContentLoaded", function () {
     })
     .catch(error => {
       console.error("Error verifying OTP:", error);
+      formErrors.innerHTML = `<p class="error">Error verifying OTP. Please try again.</p>`;
+      setTimeout(() => { formErrors.innerHTML = ""; }, 2000);
       submitBtnText.textContent = "Submit Signature";
       submitBtnSpinner.classList.remove("active");
       submitButton.disabled = false;

@@ -24,8 +24,8 @@ class Signer(models.Model):
     signer_birthdate = models.DateField(null=False, blank=False)  
     signer_cpf = models.CharField(max_length=14, unique=True) 
     signer_id = models.CharField(max_length=14, unique=True) 
-    signer_rg_number = models.CharField(max_length=10)
-    signer_rg_issuing_authority = models.CharField(max_length=10)
+    signer_rg_number = models.CharField(max_length=10, null=True, blank=True)  # Updated
+    signer_rg_issuing_authority = models.CharField(max_length=10, null=True, blank=True)  # Updated
     signer_email = models.EmailField()
     signer_email_is_checked = models.BooleanField(default=False)
     signer_mobile_number = models.CharField(max_length=20, default="+55 (37) 9 NNNN-NNNN")
@@ -34,10 +34,10 @@ class Signer(models.Model):
     signer_signature_is_hidden = models.BooleanField(default=False)
     signing_datetime = models.DateTimeField(default=now)
     originating_ip = models.CharField(max_length=39)
-    password = models.CharField(max_length=255)
+    password = models.CharField(max_length=255, null=True, blank=True)  # Updated
     pdf_file = models.FileField(upload_to='pdfs/', blank=True, null=True)
     hash_and_time = models.CharField(max_length=255)
-    pin_code = models.CharField(max_length=9)
+    pin_code = models.CharField(max_length=9, null=True, blank=True)  # Updated
     email_otp = models.CharField(max_length=6, blank=True, null=True)
     mobile_otp = models.CharField(max_length=6, blank=True, null=True)
     otp_created_at = models.DateTimeField(null=True, blank=True)
