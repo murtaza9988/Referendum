@@ -1,5 +1,5 @@
 from django.urls import path
-from main import views
+from referendo import views
 
 urlpatterns = [
     path('', views.signer_form, name='signer_form'),
