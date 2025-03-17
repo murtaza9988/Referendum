@@ -1,6 +1,25 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block content %}
+<style>
+/* Increase contrast for hamburger icon (if used) */
+.hamburger-icon {
+    color: #000;
+}
+/* Placeholder styling */
+input::placeholder {
+    color: #aaa;
+}
+/* Real-time message styles */
+.realtime-error {
+    color: red;
+    font-size: 0.9em;
+}
+.realtime-success {
+    color: green;
+    font-size: 0.9em;
+}
+</style>
 <link rel="stylesheet" type="text/css" href="{% static 'css/signer_form.css' %}">
 
 <div class="form-container">
@@ -34,7 +53,7 @@
             <label for="{{ form.signer_full_name.id_for_label }}">Full Name</label>
             {{ form.signer_full_name }}
             {% if form.signer_full_name.errors %}
-            <span class="error">{{ form.signer_full_name.errors|first }}</span>
+              <span class="error">{{ form.signer_full_name.errors|first }}</span>
             {% endif %}
           </div>
           <div class="form-group gender-group">
@@ -65,13 +84,17 @@
           <div class="form-group">
             <label for="{{ form.signer_cpf.id_for_label }}">CPF</label>
             {{ form.signer_cpf }}
+            <!-- Real-time message for CPF -->
+            <span id="cpf-error" class="realtime-error"></span>
             {% if form.signer_cpf.errors %}
-            <span class="error">{{ form.signer_cpf.errors|first }}</span>
+              <span class="error">{{ form.signer_cpf.errors|first }}</span>
             {% endif %}
           </div>
           <div class="form-group">
             <label for="{{ form.signer_id.id_for_label }}">Voter ID</label>
             {{ form.signer_id }}
+            <!-- Real-time message for Voter ID -->
+            <span id="voterid-error" class="realtime-error"></span>
           </div>
           <div class="form-group">
             <label for="{{ form.signer_email.id_for_label }}">Email</label>
@@ -87,7 +110,6 @@
           </div>
           <div class="btn-container">
             <button type="button" class="action-btn back-btn" data-prev="1" aria-label="Go back to Step 1">Back</button>
-            <!-- "Get OTP" button calls the send_otp API -->
             <button type="button" class="action-btn pin-btn" id="pin-btn" aria-label="Get OTP">
               <span id="pin-btn-text">Get OTP</span>
               <span class="spinner" id="pin-btn-spinner"></span>
@@ -126,7 +148,7 @@
       {% if messages %}
       <div class="messages">
         {% for message in messages %}
-        <p class="message {{ message.tags }}">{{ message }}</p>
+          <p class="message {{ message.tags }}">{{ message }}</p>
         {% endfor %}
       </div>
       {% endif %}
@@ -144,12 +166,31 @@ document.addEventListener("DOMContentLoaded", function () {
   const submitBtnText = document.getElementById("submit-btn-text");
   const submitBtnSpinner = document.getElementById("submit-btn-spinner");
   const formErrors = document.getElementById("form-errors");
+  const cpfError = document.getElementById("cpf-error");
+  const voteridError = document.getElementById("voterid-error");
+  const cpfField = document.getElementById("id_signer_cpf");
+  const voterIdField = document.getElementById("id_signer_id");
   const steps = document.querySelectorAll(".form-step");
   const stepIndicators = document.querySelectorAll(".step");
   const nextButtons = document.querySelectorAll(".next-btn");
   const backButtons = document.querySelectorAll(".back-btn");
   const progressFill = document.querySelector(".progress-fill");
   let currentStep = 1;
+
+  // Update OTP button state: disable if either CPF or Voter ID are empty or have errors.
+  function updateOTPButtonState() {
+    const cpfValid = cpfField.value.trim() !== "" && cpfError.textContent.trim() === "";
+    const voterValid = voterIdField.value.trim() !== "" && voteridError.textContent.trim() === "";
+    pinButton.disabled = !(cpfValid && voterValid);
+  }
+
+  // Call updateOTPButtonState on input events.
+  if(cpfField){
+    cpfField.addEventListener("input", updateOTPButtonState);
+  }
+  if(voterIdField){
+    voterIdField.addEventListener("input", updateOTPButtonState);
+  }
 
   // Helper: Collect data from steps 1 & 2; include only checked radio inputs.
   function collectFormData() {
@@ -232,19 +273,78 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  // "Get OTP" button: Collect data from steps 1 & 2 and call the send_otp API.
+  // Real-time CPF check: on blur.
+  if(cpfField){
+    cpfField.addEventListener("blur", function(){
+      const cpfValue = this.value;
+      if(cpfValue.trim() === ""){
+        cpfError.textContent = "";
+        updateOTPButtonState();
+        return;
+      }
+      fetch("{% url 'check_cpf' %}?cpf=" + encodeURIComponent(cpfValue), {
+        method: "GET",
+        credentials: "same-origin",
+      })
+      .then(response => response.json())
+      .then(data => {
+        if(data.valid){
+          cpfError.textContent = data.message;
+          cpfError.className = "realtime-success";
+        } else {
+          cpfError.textContent = data.message;
+          cpfError.className = "realtime-error";
+        }
+        setTimeout(() => { cpfError.textContent = ""; updateOTPButtonState(); }, 2000);
+      })
+      .catch(error => {
+        console.error("Error checking CPF:", error);
+      });
+    });
+  }
+
+  // Real-time Voter ID check: on blur.
+  if(voterIdField){
+    voterIdField.addEventListener("blur", function(){
+      const voterIdValue = this.value;
+      if(voterIdValue.trim() === ""){
+        voteridError.textContent = "";
+        updateOTPButtonState();
+        return;
+      }
+      fetch("{% url 'check_voter_id' %}?voter_id=" + encodeURIComponent(voterIdValue), {
+        method: "GET",
+        credentials: "same-origin",
+      })
+      .then(response => response.json())
+      .then(data => {
+        if(data.valid){
+          voteridError.textContent = data.message;
+          voteridError.className = "realtime-success";
+        } else {
+          voteridError.textContent = data.message;
+          voteridError.className = "realtime-error";
+        }
+        setTimeout(() => { voteridError.textContent = ""; updateOTPButtonState(); }, 2000);
+      })
+      .catch(error => {
+        console.error("Error checking Voter ID:", error);
+      });
+    });
+  }
+
+  // "Get OTP" button: Only call the API if enabled.
   pinButton.addEventListener("click", function (e) {
-    e.preventDefault();
+    // If button is disabled, do nothing.
+    if(pinButton.disabled) return;
     pinBtnText.textContent = "Sending OTP...";
     pinBtnSpinner.classList.add("active");
     pinButton.disabled = true;
-    
     const data = collectFormData();
     const formData = new URLSearchParams();
     for (const key in data) {
       formData.append(key, data[key]);
     }
-    
     fetch("{% url 'send_otp' %}", {
       method: "POST",
       body: formData,
@@ -285,9 +385,7 @@ document.addEventListener("DOMContentLoaded", function () {
     submitBtnText.textContent = "Submitting...";
     submitBtnSpinner.classList.add("active");
     submitButton.disabled = true;
-    
     const finalFormData = new URLSearchParams(new FormData(form));
-    
     fetch("{% url 'verify_signer' %}", {
       method: "POST",
       body: finalFormData,

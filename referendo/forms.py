@@ -5,15 +5,16 @@ from .models import Signer
 import re
 
 class SignerForm(forms.ModelForm):
+    # Change birthdate widget to type "text" with a placeholder.
     signer_birthdate = forms.DateField(
-        widget=forms.DateInput(attrs={'type': 'date'})
+        widget=forms.TextInput(attrs={'placeholder': 'dd/mm/yyyy'})
     )
     password = forms.CharField(widget=forms.PasswordInput)
     signer_social_network_ID = forms.ChoiceField(
         choices=[
             ('google', 'Google'),
             ('facebook', 'Facebook'),
-            ('twitter', 'Twitter') 
+            ('twitter', 'Twitter')
         ],
         widget=forms.Select()
     )
@@ -26,7 +27,7 @@ class SignerForm(forms.ModelForm):
         model = Signer
         exclude = ['email_otp', 'mobile_otp', 'otp_created_at', 'originating_ip', 
                    'signer_email_is_checked', 'signer_mobile_is_checked',
-                   'hash_and_time', 'signing_datetime']
+                   'hash_and_time', 'signing_datetime', 'signer_hash', 'signer_signature']
         widgets = {
             'signer_full_name': forms.TextInput(attrs={'placeholder': 'Enter your full name'}),
             'signer_cpf': forms.TextInput(attrs={'placeholder': 'XXX.XXX.XXX-XX'}),
@@ -57,7 +58,7 @@ class SignerForm(forms.ModelForm):
 
     def clean_signer_social_network_ID(self):
         social_id = self.cleaned_data['signer_social_network_ID']
-        valid_choices = dict(self.fields['signer_social_network_ID'].choices).keys()  
+        valid_choices = dict(self.fields['signer_social_network_ID'].choices).keys()
         if social_id not in valid_choices:
             raise ValidationError("Invalid choice. Please select Google, Facebook, or Twitter.")
         return social_id
@@ -69,10 +70,17 @@ class SignerForm(forms.ModelForm):
             raise ValidationError('Birthdate cannot be in the future.')
         return cleaned_data
 
-# New form for OTP verification that only includes the fields you collect in your multi-step UI.
+# New form for OTP verification using only the fields collected in your UI.
 class SignerOTPForm(forms.ModelForm):
     class Meta:
         model = Signer
-        # Only include fields that are collected in your UI
         fields = ['signer_full_name', 'gender', 'signer_birthdate', 'signer_cpf',
                   'signer_id', 'signer_email', 'signer_mobile_number', 'signer_signature_is_hidden']
+        widgets = {
+            'signer_full_name': forms.TextInput(attrs={'placeholder': 'Enter your full name'}),
+            'signer_birthdate': forms.TextInput(attrs={'placeholder': 'dd/mm/yyyy'}),
+            'signer_cpf': forms.TextInput(attrs={'placeholder': 'XXX.XXX.XXX-XX'}),
+            'signer_id': forms.TextInput(attrs={'placeholder': 'Enter your voter ID'}),
+            'signer_email': forms.EmailInput(attrs={'placeholder': 'Enter your email'}),
+            'signer_mobile_number': forms.TextInput(attrs={'placeholder': '+55 (XX) 9XXXX-XXXX'}),
+        }
